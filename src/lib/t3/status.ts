@@ -31,11 +31,23 @@ function hasRealKeys() {
   return Boolean(process.env.T3N_API_KEY && process.env.USER_KEY && process.env.AGENT_KEY);
 }
 
+function getProcurementBase() {
+  if (process.env.PROCUREMENT_API_BASE) {
+    return process.env.PROCUREMENT_API_BASE;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  return "http://localhost:3000";
+}
+
 export async function getTerminal3Status(): Promise<T3Status> {
   const mode = hasRealKeys() ? "real" : "mock";
   const tenantDid = process.env.T3_TENANT_DID ?? "did:t3n:mock-tenant-0000000000000000000000000000000001";
   const tenantId = tenantDid.replace("did:t3n:", "");
-  const procurementBase = process.env.PROCUREMENT_API_BASE ?? "http://localhost:3000";
+  const procurementBase = getProcurementBase();
   const grantStatus = mode === "mock" ? "mocked" : process.env.T3_GRANT_CONFIGURED === "true" ? "configured" : "missing";
   const allowedHosts = [new URL(procurementBase).host];
 
