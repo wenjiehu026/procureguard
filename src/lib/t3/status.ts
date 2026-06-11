@@ -36,8 +36,9 @@ function getProcurementBase() {
     return process.env.PROCUREMENT_API_BASE;
   }
 
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  if (vercelHost) {
+    return `https://${vercelHost}`;
   }
 
   return "http://localhost:3000";
@@ -118,9 +119,11 @@ function buildReadiness(input: {
     {
       id: "procurement-secret",
       label: "Procurement API key seeded",
-      status: process.env.PROCUREMENT_API_KEY ? "pass" : "warning",
+      status: process.env.PROCUREMENT_API_KEY || !realMode ? "pass" : "warning",
       detail: process.env.PROCUREMENT_API_KEY
         ? "PROCUREMENT_API_KEY is available for the contract secrets map."
+        : !realMode
+          ? "Mock mode uses a simulated procurement key; real mode should seed this into z:<tid>:secrets."
         : "Set PROCUREMENT_API_KEY and seed it into z:<tid>:secrets before real smoke tests.",
     },
     {

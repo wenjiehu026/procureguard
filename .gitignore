@@ -13,3 +13,5 @@ pnpm-debug.log*
 target
 *.wasm
 *.tsbuildinfo
+
+.vercel
