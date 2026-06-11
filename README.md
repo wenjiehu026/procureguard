@@ -66,6 +66,14 @@ What this demonstrates:
 - SDK integration: follows Terminal 3 ADK concepts: tenant DID, contract tail, scoped grant, allowed hosts, secrets map, `http`, and `http-with-placeholders`.
 - Creativity: procurement is a realistic enterprise/government workflow with privacy and auditability built into the agent action path.
 
+## Submission Docs
+
+- `docs/demo-script.md`: recording script.
+- `docs/architecture.md`: system design and data flow.
+- `docs/security-model.md`: trust boundaries and residual risks.
+- `docs/judging-checklist.md`: final submission checklist.
+- `docs/onboarding-findings.md`: bugs and documentation gaps discovered during real testnet onboarding.
+
 ## Screenshot Checklist
 
 - Dashboard initial state showing T3 mode and contract tail.

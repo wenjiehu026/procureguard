@@ -481,6 +481,12 @@ button:disabled {
   color: var(--muted);
 }
 
+.icon-button {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
 .button.approve {
   border-color: var(--success);
   background: var(--success);
@@ -734,6 +740,88 @@ button:disabled {
 .evidence-row code {
   overflow-wrap: anywhere;
   font-family: "Geist Mono", "SFMono-Regular", ui-monospace, monospace;
+}
+
+.grant-viewer {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(5, 14, 13, 0.72);
+  overflow: hidden;
+}
+
+.grant-viewer summary {
+  cursor: pointer;
+  padding: 10px 11px;
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.grant-viewer pre {
+  max-height: 280px;
+  margin: 0;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  padding: 11px;
+  color: #c8fff4;
+  font-family: "Geist Mono", "SFMono-Regular", ui-monospace, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.readiness-list {
+  display: grid;
+  gap: 8px;
+}
+
+.readiness-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 9px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(5, 14, 13, 0.72);
+  padding: 10px;
+}
+
+.readiness-item > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.readiness-item.pass > span {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.readiness-item.warning > span {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.readiness-item.missing > span {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.readiness-item strong {
+  display: block;
+  font-size: 13px;
+}
+
+.readiness-item p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .blocker {

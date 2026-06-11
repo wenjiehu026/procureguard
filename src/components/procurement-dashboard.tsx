@@ -7,6 +7,7 @@ import {
   Check,
   CircleDollarSign,
   ClipboardCheck,
+  Download,
   FileClock,
   KeyRound,
   Loader2,
@@ -72,6 +73,13 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
     return payload?.submitted ?? null;
   }, [events]);
 
+  const receiptFingerprint = useMemo(
+    () => (submissionReceipt ? fingerprintJson(submissionReceipt) : null),
+    [submissionReceipt],
+  );
+
+  const grantPayload = useMemo(() => buildGrantPayloadPreview(status), [status]);
+
   const metrics = useMemo(() => {
     const allowlisted = quotes.filter((quote) => quote.allowed).length;
     const best = quotes.find((quote) => quote.allowed);
@@ -89,6 +97,35 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
   async function refreshStatus() {
     const response = await fetch("/api/t3/status", { method: "POST" });
     setStatus((await response.json()) as T3Status);
+  }
+
+  function exportAuditJson() {
+    const audit = {
+      exportedAt: new Date().toISOString(),
+      scenario: loadedScenario,
+      terminal3: {
+        mode: status.mode,
+        environment: status.environment,
+        tenantDid: status.tenantDid,
+        agentDid: status.agentDid,
+        contractScript: status.contractScript,
+        contractVersion: status.contractVersion,
+        grantStatus: status.grantStatus,
+        allowedHosts: status.allowedHosts,
+        readiness: status.readiness,
+      },
+      grantPayload,
+      receipt: submissionReceipt,
+      receiptFingerprint,
+      events,
+    };
+    const blob = new Blob([JSON.stringify(audit, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `procureguard-audit-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   function clearRunState() {
@@ -469,8 +506,17 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
                 Result Evidence
               </h2>
             </div>
+            <button className="button secondary icon-button" type="button" onClick={exportAuditJson} disabled={events.length === 0}>
+              <Download size={16} />
+              Export
+            </button>
           </div>
-          <ResultEvidence receipt={submissionReceipt} policy={policyDecision} state={state} />
+          <ResultEvidence
+            receipt={submissionReceipt}
+            receiptFingerprint={receiptFingerprint}
+            policy={policyDecision}
+            state={state}
+          />
 
           <div className="panel-header" style={{ marginTop: 22 }}>
             <div>
@@ -486,6 +532,32 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
             <EvidenceRow label="Allowed host" value={status.allowedHosts.join(", ")} />
             <EvidenceRow label="Grant mode" value={status.grantStatus} />
             <EvidenceRow label="PII path" value="http-with-placeholders" />
+          </div>
+
+          <details className="grant-viewer">
+            <summary>Grant Payload Viewer</summary>
+            <pre>{JSON.stringify(grantPayload, null, 2)}</pre>
+          </details>
+
+          <div className="panel-header" style={{ marginTop: 22 }}>
+            <div>
+              <h2 className="panel-title">
+                <ShieldCheck size={18} />
+                Real Mode Readiness
+              </h2>
+              <p className="panel-subtitle">What remains before a real Terminal 3 smoke test.</p>
+            </div>
+          </div>
+          <div className="readiness-list">
+            {status.readiness.map((check) => (
+              <div className={`readiness-item ${check.status}`} key={check.id}>
+                <span>{check.status === "pass" ? <Check size={14} /> : check.status === "warning" ? "!" : <X size={14} />}</span>
+                <div>
+                  <strong>{check.label}</strong>
+                  <p>{check.detail}</p>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div className="panel-header" style={{ marginTop: 22 }}>
@@ -593,10 +665,12 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function ResultEvidence({
   receipt,
+  receiptFingerprint,
   policy,
   state,
 }: {
   receipt: PurchaseSubmission | null;
+  receiptFingerprint: string | null;
   policy: PolicyDecision | null;
   state: StreamState;
 }) {
@@ -608,6 +682,7 @@ function ResultEvidence({
         <EvidenceRow label="Amount" value={`${receipt.amount} ${receipt.currency}`} />
         <EvidenceRow label="Approval id" value={receipt.approvalId} />
         <EvidenceRow label="PII handling" value={receipt.piiHandling} />
+        <EvidenceRow label="Receipt hash" value={receiptFingerprint ?? "-"} />
       </div>
     );
   }
@@ -749,4 +824,34 @@ function getApprovalTitle(
   if (receipt) return "Submission complete";
   if (state === "blocked") return "No approval requested";
   return "No approval pending";
+}
+
+function buildGrantPayloadPreview(status: T3Status) {
+  return {
+    agents: [
+      {
+        agentDid: status.agentDid,
+        scripts: [
+          {
+            scriptName: status.contractScript,
+            versionReq: status.contractVersion,
+            functions: ["search-vendors", "submit-purchase-request"],
+            allowedHosts: status.allowedHosts,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function fingerprintJson(value: unknown) {
+  const input = JSON.stringify(value);
+  let hash = 0x811c9dc5;
+
+  for (let index = 0; index < input.length; index += 1) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return `pg-${(hash >>> 0).toString(16).padStart(8, "0")}`;
 }

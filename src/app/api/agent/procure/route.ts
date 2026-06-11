@@ -1,6 +1,5 @@
 import { encodeNdjson, makeEvent } from "@/lib/procurement/audit";
 import { draftRecommendation } from "@/lib/procurement/agent";
-import { findQuotes } from "@/lib/procurement/data";
 import { evaluatePolicy } from "@/lib/procurement/policy";
 import { approvalSchema, procurementRequestSchema } from "@/lib/procurement/schemas";
 import type { AgentEvent } from "@/lib/procurement/types";
@@ -34,12 +33,17 @@ export async function POST(request: Request) {
           ),
         );
 
-        const quotes = findQuotes(procurementRequest);
+        const quotes = await t3.searchVendors({
+          category: procurementRequest.category,
+          quantity: procurementRequest.quantity,
+          maxBudget: procurementRequest.maxBudget,
+          region: procurementRequest.region,
+        });
         send(
           makeEvent(
             "quotes",
-            "Vendor quotes returned",
-            `${quotes.length} quote(s) evaluated. Non-PII search can be executed through the TEE contract search-vendors function.`,
+            status.mode === "real" ? "TEE vendor search returned" : "Mock TEE vendor search returned",
+            `${quotes.length} quote(s) evaluated through Terminal3Adapter.searchVendors. In real mode this invokes the TEE contract search-vendors function.`,
             { quotes },
           ),
         );
