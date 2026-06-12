@@ -7,11 +7,14 @@ import {
   Check,
   CircleDollarSign,
   ClipboardCheck,
+  Cpu,
   Download,
   FileClock,
   KeyRound,
   Loader2,
   LockKeyhole,
+  Network,
+  RadioTower,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -206,7 +209,7 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell state-${state}`}>
       <header className="topbar">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
@@ -235,6 +238,7 @@ export function ProcurementDashboard({ initialStatus }: { initialStatus: T3Statu
             <span className="badge teal">Judge demo path</span>
             <h2>{loadedScenario.label}</h2>
             <p>{loadedScenario.description}</p>
+            <SignalConsole status={status} state={state} hasReceipt={Boolean(submissionReceipt)} />
           </div>
           <div className="guide-visuals">
             <div className="stepper" aria-label="Demo steps">
@@ -591,6 +595,56 @@ function Step({ number, label, active, complete }: { number: string; label: stri
     <div className={`step ${active ? "active" : ""} ${complete ? "complete" : ""}`}>
       <span>{complete ? <Check size={14} /> : number}</span>
       <strong>{label}</strong>
+    </div>
+  );
+}
+
+function SignalConsole({
+  status,
+  state,
+  hasReceipt,
+}: {
+  status: T3Status;
+  state: StreamState;
+  hasReceipt: boolean;
+}) {
+  return (
+    <div className="signal-console" aria-label="Live security telemetry">
+      <SignalChip icon={<Cpu size={15} />} label="Agent auth" value={status.grantStatus} active={state !== "idle"} />
+      <SignalChip
+        icon={<Network size={15} />}
+        label="TEE route"
+        value={state === "running" || state === "approval" ? "streaming" : hasReceipt ? "sealed" : status.contractTail}
+        active={state === "running" || state === "approval" || hasReceipt}
+      />
+      <SignalChip
+        icon={<RadioTower size={15} />}
+        label="Egress host"
+        value={status.allowedHosts[0] ?? "pending"}
+        active={hasReceipt || state === "submitted"}
+      />
+    </div>
+  );
+}
+
+function SignalChip({
+  icon,
+  label,
+  value,
+  active,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  active: boolean;
+}) {
+  return (
+    <div className={`signal-chip ${active ? "active" : ""}`}>
+      <span className="signal-icon">{icon}</span>
+      <span>
+        <strong>{label}</strong>
+        <code>{value}</code>
+      </span>
     </div>
   );
 }
